@@ -1,0 +1,15 @@
+[package]
+name = "memchr-rs"
+version = "1.0.0"
+edition = "2024"
+authors = ["Success Kingsley <xosnrdev@gmail.com>"]
+description = "Fast memchr and memchr2 implementations in Rust"
+repository = "https://github.com/xosnrdev/memchr-rs"
+categories = ["text-processing", "algorithms"]
+keywords = ["memchr", "search", "bytes"]
+license = "MIT"
+exclude = ["/.github"]
+
+[features]
+memchr = []
+memchr2 = []
