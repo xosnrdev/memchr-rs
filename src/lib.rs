@@ -25,6 +25,14 @@
 //!     println!("Found 'w' at position: {index}");
 //! }
 //! ```
+//!
+//!
+//! For `no_std` environments, disable the `default-features`:
+//!
+//! ```toml
+//! [dependencies]
+//! memchr-rs = { version = "1", default-features = false, features = ["memchr"] }
+//! ```
 
 #![warn(clippy::pedantic)]
 #![allow(clippy::many_single_char_names)]
@@ -32,6 +40,7 @@
     target_arch = "loongarch64",
     feature(stdarch_loongarch, stdarch_loongarch_feature_detection, loongarch_target_feature)
 )]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "memchr")]
 mod memchr;
