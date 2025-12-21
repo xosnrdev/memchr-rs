@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#[cfg(not(feature = "std"))]
+use core::ptr;
+#[cfg(feature = "std")]
 use std::ptr;
 
 /// `memchr`
@@ -33,11 +36,14 @@ pub fn memchr(needle: u8, haystack: &[u8], offset: usize) -> usize {
 }
 
 unsafe fn memchr_raw(needle: u8, beg: *const u8, end: *const u8) -> *const u8 {
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64"))]
-    return unsafe { MEMCHR_DISPATCH(needle, beg, end) };
+    #[cfg(feature = "std")]
+    {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64"))]
+        return unsafe { MEMCHR_DISPATCH(needle, beg, end) };
 
-    #[cfg(target_arch = "aarch64")]
-    return unsafe { memchr_neon(needle, beg, end) };
+        #[cfg(target_arch = "aarch64")]
+        return unsafe { memchr_neon(needle, beg, end) };
+    }
 
     #[allow(unreachable_code)]
     return unsafe { memchr_fallback(needle, beg, end) };
@@ -60,11 +66,14 @@ unsafe fn memchr_fallback(needle: u8, mut beg: *const u8, end: *const u8) -> *co
 // itself to the correct implementation on the first call. This reduces binary size.
 // It would also reduce branches if we had >2 implementations (a jump still needs to be predicted).
 // NOTE that this ONLY works if Control Flow Guard is disabled on Windows.
-#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(all(
+    feature = "std",
+    any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64")
+))]
 static mut MEMCHR_DISPATCH: unsafe fn(needle: u8, beg: *const u8, end: *const u8) -> *const u8 =
     memchr_dispatch;
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
 unsafe fn memchr_dispatch(needle: u8, beg: *const u8, end: *const u8) -> *const u8 {
     let func = if is_x86_feature_detected!("avx2") {
         memchr_avx2
@@ -77,6 +86,7 @@ unsafe fn memchr_dispatch(needle: u8, beg: *const u8, end: *const u8) -> *const 
     unsafe { func(needle, beg, end) }
 }
 
+#[cfg(feature = "std")]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx2")]
 unsafe fn memchr_avx2(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
@@ -108,6 +118,7 @@ unsafe fn memchr_avx2(needle: u8, mut beg: *const u8, end: *const u8) -> *const 
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[target_feature(enable = "avx512bw")]
 unsafe fn memchr_avx512bw(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
@@ -136,7 +147,7 @@ unsafe fn memchr_avx512bw(needle: u8, mut beg: *const u8, end: *const u8) -> *co
     }
 }
 
-#[cfg(target_arch = "loongarch64")]
+#[cfg(all(feature = "std", target_arch = "loongarch64"))]
 unsafe fn memchr_dispatch(needle: u8, beg: *const u8, end: *const u8) -> *const u8 {
     use std::arch::is_loongarch_feature_detected;
 
@@ -151,6 +162,7 @@ unsafe fn memchr_dispatch(needle: u8, beg: *const u8, end: *const u8) -> *const 
     unsafe { func(needle, beg, end) }
 }
 
+#[cfg(feature = "std")]
 #[cfg(target_arch = "loongarch64")]
 #[target_feature(enable = "lasx")]
 unsafe fn memchr_lasx(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
@@ -183,6 +195,7 @@ unsafe fn memchr_lasx(needle: u8, mut beg: *const u8, end: *const u8) -> *const 
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(target_arch = "loongarch64")]
 #[target_feature(enable = "lsx")]
 unsafe fn memchr_lsx(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
@@ -213,7 +226,7 @@ unsafe fn memchr_lsx(needle: u8, mut beg: *const u8, end: *const u8) -> *const u
     }
 }
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(feature = "std", target_arch = "aarch64"))]
 unsafe fn memchr_neon(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
     unsafe {
         use std::arch::aarch64::{

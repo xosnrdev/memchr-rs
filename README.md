@@ -25,3 +25,10 @@ fn main() {
     println!("Found 'w' at position: {index}");
 }
 ```
+
+For `no_std` environments, disable the `default-features`:
+
+```toml
+[dependencies]
+memchr-rs = { version = "1", default-features = false, features = ["memchr"] }
+```

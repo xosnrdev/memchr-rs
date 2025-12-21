@@ -11,5 +11,7 @@ license = "MIT"
 exclude = ["/.github"]
 
 [features]
+default = ["std"]
+std = []
 memchr = []
 memchr2 = []
