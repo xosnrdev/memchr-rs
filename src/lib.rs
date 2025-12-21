@@ -34,7 +34,7 @@
 //! memchr-rs = { version = "1", default-features = false, features = ["memchr"] }
 //! ```
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![warn(clippy::pedantic)]
 #![allow(clippy::many_single_char_names)]
 #![cfg_attr(
