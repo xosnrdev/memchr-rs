@@ -45,7 +45,7 @@ unsafe fn memchr_raw(needle: u8, beg: *const u8, end: *const u8) -> *const u8 {
         return unsafe { memchr_neon(needle, beg, end) };
     }
 
-    #[cfg(all(not(feature = "std"), target_arch = "wasm32"))]
+    #[cfg(target_arch = "wasm32")]
     return unsafe { memchr_wasm32(needle, beg, end) };
 
     #[allow(unreachable_code)]
@@ -265,12 +265,11 @@ unsafe fn memchr_neon(needle: u8, mut beg: *const u8, end: *const u8) -> *const 
     }
 }
 
-#[cfg(not(feature = "std"))]
 #[cfg(target_arch = "wasm32")]
 #[target_feature(enable = "simd128")]
 unsafe fn memchr_wasm32(needle: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
     unsafe {
-        use core::arch::wasm32::*;
+        use core::arch::wasm32::{u8x16_bitmask, u8x16_eq, u8x16_splat, v128_load};
 
         let n = u8x16_splat(needle);
         let mut remaining = end.offset_from_unsigned(beg);
