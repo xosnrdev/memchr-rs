@@ -41,6 +41,7 @@
     target_arch = "loongarch64",
     feature(stdarch_loongarch, stdarch_loongarch_feature_detection, loongarch_target_feature)
 )]
+#![cfg_attr(target_arch = "wasm64", feature(simd_wasm64))]
 
 #[cfg(feature = "memchr")]
 mod memchr;

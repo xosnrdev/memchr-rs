@@ -42,6 +42,9 @@ unsafe fn memchr2_raw(needle1: u8, needle2: u8, beg: *const u8, end: *const u8) 
     #[cfg(target_arch = "wasm32")]
     return unsafe { memchr2_wasm32(needle1, needle2, beg, end) };
 
+    #[cfg(target_arch = "wasm64")]
+    return unsafe { memchr2_wasm64(needle1, needle2, beg, end) };
+
     #[allow(unreachable_code)]
     return unsafe { memchr2_fallback(needle1, needle2, beg, end) };
 }
@@ -292,6 +295,40 @@ unsafe fn memchr2_wasm32(
 ) -> *const u8 {
     unsafe {
         use core::arch::wasm32::{u8x16_bitmask, u8x16_eq, u8x16_splat, v128_load, v128_or};
+
+        let n1 = u8x16_splat(needle1);
+        let n2 = u8x16_splat(needle2);
+        let mut remaining = end.offset_from_unsigned(beg);
+
+        while remaining >= 16 {
+            let v = v128_load(beg.cast());
+            let cmp1 = u8x16_eq(v, n1);
+            let cmp2 = u8x16_eq(v, n2);
+            let cmp = v128_or(cmp1, cmp2);
+            let mask = u8x16_bitmask(cmp);
+
+            if mask != 0 {
+                return beg.add(mask.trailing_zeros() as usize);
+            }
+
+            beg = beg.add(16);
+            remaining -= 16;
+        }
+
+        memchr2_fallback(needle1, needle2, beg, end)
+    }
+}
+
+#[cfg(target_arch = "wasm64")]
+#[target_feature(enable = "simd128")]
+unsafe fn memchr2_wasm64(
+    needle1: u8,
+    needle2: u8,
+    mut beg: *const u8,
+    end: *const u8,
+) -> *const u8 {
+    unsafe {
+        use core::arch::wasm64::{u8x16_bitmask, u8x16_eq, u8x16_splat, v128_load, v128_or};
 
         let n1 = u8x16_splat(needle1);
         let n2 = u8x16_splat(needle2);
