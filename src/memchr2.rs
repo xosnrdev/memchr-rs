@@ -71,8 +71,10 @@ unsafe fn memchr2_fallback(
 // itself to the correct implementation on the first call. This reduces binary size.
 // It would also reduce branches if we had >2 implementations (a jump still needs to be predicted).
 // NOTE that this ONLY works if Control Flow Guard is disabled on Windows.
-#[cfg(feature = "std")]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(all(
+    feature = "std",
+    any(target_arch = "x86", target_arch = "x86_64", target_arch = "loongarch64")
+))]
 static mut MEMCHR2_DISPATCH: unsafe fn(
     needle1: u8,
     needle2: u8,
@@ -80,8 +82,7 @@ static mut MEMCHR2_DISPATCH: unsafe fn(
     end: *const u8,
 ) -> *const u8 = memchr2_dispatch;
 
-#[cfg(feature = "std")]
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
 unsafe fn memchr2_dispatch(needle1: u8, needle2: u8, beg: *const u8, end: *const u8) -> *const u8 {
     let func = if is_x86_feature_detected!("avx2") {
         memchr2_avx2
@@ -167,8 +168,7 @@ unsafe fn memchr2_avx512bw(
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg(target_arch = "loongarch64")]
+#[cfg(all(feature = "std", target_arch = "loongarch64"))]
 unsafe fn memchr2_dispatch(needle1: u8, needle2: u8, beg: *const u8, end: *const u8) -> *const u8 {
     use std::arch::is_loongarch_feature_detected;
 
@@ -253,8 +253,7 @@ unsafe fn memchr2_lsx(needle1: u8, needle2: u8, mut beg: *const u8, end: *const 
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg(target_arch = "aarch64")]
+#[cfg(all(feature = "std", target_arch = "aarch64"))]
 unsafe fn memchr2_neon(needle1: u8, needle2: u8, mut beg: *const u8, end: *const u8) -> *const u8 {
     unsafe {
         use std::arch::aarch64::{
