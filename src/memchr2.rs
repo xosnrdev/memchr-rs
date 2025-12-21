@@ -78,9 +78,9 @@ static mut MEMCHR2_DISPATCH: unsafe fn(
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 unsafe fn memchr2_dispatch(needle1: u8, needle2: u8, beg: *const u8, end: *const u8) -> *const u8 {
-    let func = if std::is_x86_feature_detected!("avx2") {
+    let func = if is_x86_feature_detected!("avx2") {
         memchr2_avx2
-    } else if std::is_x86_feature_detected!("avx512bw") {
+    } else if is_x86_feature_detected!("avx512bw") {
         memchr2_avx512bw
     } else {
         memchr2_fallback
