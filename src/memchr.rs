@@ -179,7 +179,7 @@ unsafe fn memchr_lasx(needle: u8, mut beg: *const u8, end: *const u8) -> *const 
             let m = (h << 16) | l;
 
             if m != 0 {
-                return beg.add(m.trailing_zeros().cast_unsigned());
+                return beg.add(m.trailing_zeros() as usize);
             }
 
             beg = beg.add(32);
@@ -209,7 +209,7 @@ unsafe fn memchr_lsx(needle: u8, mut beg: *const u8, end: *const u8) -> *const u
             let m = lsx_vpickve2gr_wu::<0>(c);
 
             if m != 0 {
-                return beg.add(m.trailing_zeros().cast_unsigned());
+                return beg.add(m.trailing_zeros() as usize);
             }
 
             beg = beg.add(16);
